@@ -1,0 +1,424 @@
+		# Hướng Dẫn Hiểu Code Selenium Testing - Từ Cơ Bản Đến Nâng Cao
+		
+		## 📚 Mục Lục
+		1. [Tổng Quan Về Selenium](#tong-quan)
+		2. [Cấu Trúc Project](#cau-truc)
+		3. [Các Thành Phần Chính](#thanh-phan)
+		4. [Phân Tích Chi Tiết Code](#phan-tich)
+		5. [Các Khái Niệm Quan Trọng](#khai-niem)
+		6. [Cách Chạy và Sử Dụng](#cach-chay)
+		7. [Troubleshooting](#troubleshooting)
+		
+		---
+		
+		## 🎯 1. Tổng Quan Về Selenium {#tong-quan}
+		
+		### Selenium là gì?
+		- **Selenium WebDriver** là công cụ tự động hóa trình duyệt web
+		- Cho phép viết code để điều khiển trình duyệt như người dùng thật
+		- Được sử dụng chủ yếu cho **kiểm thử tự động** (automated testing)
+		
+		### Tại sao sử dụng Selenium?
+		- ✅ Kiểm thử không cần thao tác thủ công
+		- ✅ Có thể chạy trên nhiều trình duyệt
+		- ✅ Tiết kiệm thời gian và công sức
+		- ✅ Đảm bảo tính nhất quán
+		
+		---
+		
+		## 🏗️ 2. Cấu Trúc Project {#cau-truc}
+		
+		```
+		Dự án của bạn/
+		├── src/
+		│   └── TestCase/
+		│       └── KiemThuAuthControllerClass.java
+		├── anh-chup-kiem-thu/          # Thư mục ảnh chụp màn hình
+		├── pom.xml                     # File cấu hình Maven
+		└── drivers/                    # ChromeDriver (tự động tải)
+		```
+		
+		### Dependencies cần thiết (pom.xml):
+		```xml
+		<dependencies>
+		    <!-- Selenium WebDriver -->
+		    <dependency>
+		        <groupId>org.seleniumhq.selenium</groupId>
+		        <artifactId>selenium-java</artifactId>
+		        <version>4.15.0</version>
+		    </dependency>
+		    
+		    <!-- JUnit 5 -->
+		    <dependency>
+		        <groupId>org.junit.jupiter</groupId>
+		        <artifactId>junit-jupiter</artifactId>
+		        <version>5.10.0</version>
+		    </dependency>
+		    
+		    <!-- WebDriverManager -->
+		    <dependency>
+		        <groupId>io.github.bonigarcia</groupId>
+		        <artifactId>webdrivermanager</artifactId>
+		        <version>5.5.3</version>
+		    </dependency>
+		    
+		    <!-- Apache Commons IO -->
+		    <dependency>
+		        <groupId>commons-io</groupId>
+		        <artifactId>commons-io</artifactId>
+		        <version>2.11.0</version>
+		    </dependency>
+		</dependencies>
+		```
+		
+		---
+		
+		## 🔧 3. Các Thành Phần Chính {#thanh-phan}
+		
+		### A. WebDriver
+		```java
+		private static WebDriver trieuDongWeb;
+		```
+		- **Chức năng**: Điều khiển trình duyệt
+		- **Giống như**: Tay của bạn khi thao tác trên web
+		- **Có thể làm**: Click, nhập text, điều hướng trang
+		
+		### B. WebDriverWait
+		```java
+		private static WebDriverWait choDoiWeb;
+		```
+		- **Chức năng**: Chờ đợi phần tử xuất hiện
+		- **Tại sao cần**: Web loading mất thời gian
+		- **Ví dụ**: Chờ nút "Đăng nhập" xuất hiện trước khi click
+		
+		### C. Annotations JUnit
+		```java
+		@BeforeAll  // Chạy trước tất cả test
+		@AfterAll   // Chạy sau tất cả test
+		@Test       // Đánh dấu là test case
+		@Order(1)   // Thứ tự chạy test
+		```
+		
+		---
+		
+		## 🔍 4. Phân Tích Chi Tiết Code {#phan-tich}
+		
+		### Bước 1: Khởi Tạo (Setup)
+		```java
+		@BeforeAll
+		static void caiDatBanDau() {
+		    // 1. Tự động tải ChromeDriver
+		    WebDriverManager.chromedriver().setup();
+		    
+		    // 2. Cấu hình Chrome
+		    ChromeOptions tuyChonChrome = new ChromeOptions();
+		    tuyChonChrome.addArguments("--start-maximized");
+		    
+		    // 3. Khởi tạo trình duyệt
+		    trieuDongWeb = new ChromeDriver(tuyChonChrome);
+		    
+		    // 4. Cài đặt thời gian chờ
+		    choDoiWeb = new WebDriverWait(trieuDongWeb, Duration.ofSeconds(10));
+		}
+		```
+		
+		**Giải thích từng bước:**
+		1. **WebDriverManager**: Tự động tải driver phù hợp với Chrome
+		2. **ChromeOptions**: Cấu hình trình duyệt (mở toàn màn hình)
+		3. **ChromeDriver**: Tạo instance để điều khiển Chrome
+		4. **WebDriverWait**: Chờ tối đa 10 giây cho mỗi thao tác
+		
+		### Bước 2: Tìm Phần Tử (Element Location)
+		```java
+		// Cách 1: Tìm theo name attribute
+		WebElement truongTenDangNhap = trieuDongWeb.findElement(By.name("username"));
+		
+		// Cách 2: Tìm theo CSS selector
+		WebElement nutDangNhap = trieuDongWeb.findElement(By.cssSelector("button[type='submit']"));
+		
+		// Cách 3: Chờ đợi phần tử xuất hiện
+		WebElement truongTenDangNhap = choDoiWeb.until(
+		    ExpectedConditions.presenceOfElementLocated(By.name("username"))
+		);
+		```
+		
+		**Các cách tìm phần tử khác:**
+		- `By.id("myId")` - Tìm theo ID
+		- `By.className("myClass")` - Tìm theo class
+		- `By.linkText("Đăng xuất")` - Tìm theo text của link
+		- `By.xpath("//div[@class='error']")` - Tìm theo XPath
+		
+		### Bước 3: Thao Tác Với Phần Tử
+		```java
+		// Nhập text
+		truongTenDangNhap.sendKeys("levanan");
+		
+		// Click
+		nutDangNhap.click();
+		
+		// Kiểm tra hiển thị
+		boolean coHienThi = truongTenDangNhap.isDisplayed();
+		
+		// Lấy text
+		String noiDung = thongBaoLoi.getText();
+		```
+		
+		### Bước 4: Kiểm Tra Kết Quả (Assertions)
+		```java
+		// Kiểm tra điều kiện đúng
+		Assertions.assertTrue(
+		    truongTenDangNhap.isDisplayed(), 
+		    "Trường tên đăng nhập phải hiển thị"
+		);
+		
+		// Kiểm tra URL chứa từ khóa
+		Assertions.assertTrue(
+		    duongDanHienTai.contains("dashboard"), 
+		    "Phải chuyển hướng đến dashboard"
+		);
+		```
+		
+		---
+		
+		## 💡 5. Các Khái Niệm Quan Trọng {#khai-niem}
+		
+		### A. Test Case Là Gì?
+		- **Định nghĩa**: Một kịch bản kiểm thử cụ thể
+		- **Ví dụ**: "Kiểm tra đăng nhập với tài khoản hợp lệ"
+		- **Cấu trúc**: Setup → Thao tác → Kiểm tra kết quả
+		
+		### B. Page Object Model (Không có trong code này)
+		```java
+		// Ví dụ cách tổ chức tốt hơn:
+		public class LoginPage {
+		    private WebDriver driver;
+		    
+		    @FindBy(name = "username")
+		    private WebElement usernameField;
+		    
+		    public void login(String username, String password) {
+		        usernameField.sendKeys(username);
+		        // ...
+		    }
+		}
+		```
+		
+		### C. Explicit Wait vs Implicit Wait
+		```java
+		// Explicit Wait (được sử dụng trong code)
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("myId")));
+		
+		// Implicit Wait (không dùng trong code này)
+		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+		```
+		
+		### D. Exception Handling
+		```java
+		try {
+		    // Thử tìm thông báo lỗi
+		    WebElement thongBaoLoi = choDoiWeb.until(ExpectedConditions.presenceOfElementLocated(...));
+		} catch (TimeoutException e) {
+		    // Nếu không tìm thấy, làm cách khác
+		    chupManHinh("khong_co_thong_bao_loi");
+		}
+		```
+		
+		---
+		
+		## 🚀 6. Cách Chạy và Sử Dụng {#cach-chay}
+		
+		### Yêu Cầu Hệ Thống:
+		- ✅ Java 8 trở lên
+		- ✅ Maven hoặc Gradle
+		- ✅ Chrome browser
+		- ✅ IDE (IntelliJ IDEA, Eclipse, VS Code)
+		
+		### Cách Chạy:
+		
+		#### Phương án 1: Từ IDE
+		1. Mở project trong IDE
+		2. Right-click vào file test
+		3. Chọn "Run KiemThuAuthControllerClass"
+		
+		#### Phương án 2: Từ Command Line
+		```bash
+		# Chạy tất cả test
+		mvn test
+		
+		# Chạy test cụ thể
+		mvn test -Dtest=KiemThuAuthControllerClass
+		
+		# Chạy với profile cụ thể
+		mvn test -Dtest=KiemThuAuthControllerClass#kiemThuDangNhap_ThongTinHopLe_ThanhCong
+		```
+		
+		### Kết Quả Mong Đợi:
+		```
+		=== KIỂM THỬ 1: Hiển Thị Form Đăng Nhập ===
+		✅ Form đăng nhập hiển thị thành công
+		Đã lưu ảnh chụp màn hình: anh-chup-kiem-thu/01_form_dang_nhap_2024-01-15_14-30-25.png
+		
+		=== KIỂM THỬ 2: Đăng Nhập Hợp Lệ ===
+		✅ Đăng nhập hợp lệ thành công, chuyển hướng đến: http://localhost:8080/dashboard
+		```
+		
+		---
+		
+		## 🔧 7. Troubleshooting {#troubleshooting}
+		
+		### Lỗi Thường Gặp:
+		
+		#### A. ChromeDriver Không Tương Thích
+		```
+		Error: SessionNotCreatedException: session not created
+		```
+		**Giải pháp:**
+		```java
+		// Cập nhật WebDriverManager
+		WebDriverManager.chromedriver().clearDriverCache().setup();
+		```
+		
+		#### B. Element Không Tìm Thấy
+		```
+		Error: NoSuchElementException: no such element
+		```
+		**Giải pháp:**
+		```java
+		// Thêm wait
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+		WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(By.name("username")));
+		```
+		
+		#### C. Trang Web Chậm Load
+		```
+		Error: TimeoutException: Expected condition failed
+		```
+		**Giải pháp:**
+		```java
+		// Tăng thời gian chờ
+		choDoiWeb = new WebDriverWait(trieuDongWeb, Duration.ofSeconds(30));
+		
+		// Hoặc chờ trang load xong
+		choDoiWeb.until(ExpectedConditions.jsReturnsValue("return document.readyState==='complete'"));
+		```
+		
+		#### D. Headless Mode (Chạy Không Giao Diện)
+		```java
+		ChromeOptions options = new ChromeOptions();
+		options.addArguments("--headless");
+		options.addArguments("--no-sandbox");
+		options.addArguments("--disable-dev-shm-usage");
+		WebDriver driver = new ChromeDriver(options);
+		```
+		
+		### Debug Tips:
+		
+		#### 1. Chụp Màn Hình Nhiều Hơn
+		```java
+		// Thêm vào mỗi bước quan trọng
+		chupManHinh("buoc_" + System.currentTimeMillis());
+		```
+		
+		#### 2. In Ra Console
+		```java
+		// Debug thông tin
+		System.out.println("Current URL: " + driver.getCurrentUrl());
+		System.out.println("Page title: " + driver.getTitle());
+		System.out.println("Element text: " + element.getText());
+		```
+		
+		#### 3. Kiểm Tra Page Source
+		```java
+		// Xem toàn bộ HTML
+		String pageSource = driver.getPageSource();
+		System.out.println(pageSource);
+		```
+		
+		---
+		
+		## 📋 8. Best Practices
+		
+		### A. Tổ Chức Code
+		```java
+		// ❌ Không tốt
+		driver.findElement(By.name("username")).sendKeys("admin");
+		driver.findElement(By.name("password")).sendKeys("123456");
+		driver.findElement(By.cssSelector("button")).click();
+		
+		// ✅ Tốt hơn
+		public void login(String username, String password) {
+		    usernameField.sendKeys(username);
+		    passwordField.sendKeys(password);
+		    loginButton.click();
+		}
+		```
+		
+		### B. Sử Dụng Constants
+		```java
+		// ✅ Tốt
+		private static final String BASE_URL = "http://localhost:8080";
+		private static final String SCREENSHOT_DIR = "screenshots";
+		private static final Duration WAIT_TIMEOUT = Duration.ofSeconds(10);
+		```
+		
+		### C. Data-Driven Testing
+		```java
+		// Sử dụng file CSV hoặc Excel
+		@ParameterizedTest
+		@CsvSource({
+		    "validUser, validPass, true",
+		    "invalidUser, invalidPass, false"
+		})
+		void testLogin(String username, String password, boolean shouldSucceed) {
+		    // Test logic
+		}
+		```
+		
+		---
+		
+		## 🎓 9. Học Thêm
+		
+		### Tài Liệu Chính Thức:
+		- [Selenium Documentation](https://selenium-python.readthedocs.io/)
+		- [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/)
+		
+		### Video Tutorials:
+		- "Selenium with Java" trên YouTube
+		- "Test Automation University" - Applitools
+		
+		### Practice Projects:
+		1. Kiểm thử trang đăng ký
+		2. Kiểm thử giỏ hàng e-commerce
+		3. Kiểm thử form liên hệ
+		
+		### Advanced Topics:
+		- Page Object Model
+		- Data-Driven Testing
+		- Parallel Execution
+		- CI/CD Integration
+		- Docker với Selenium Grid
+		
+		---
+		
+		## 💭 Tóm Tắt
+		
+		Code Selenium này thực hiện **10 test cases** để kiểm tra chức năng xác thực:
+		
+		1. **Test cơ bản**: Hiển thị form, đăng nhập/ký thành công
+		2. **Test biên**: Dữ liệu rỗng, trùng lặp, không hợp lệ  
+		3. **Test luồng**: Đăng nhập → Đăng xuất
+		
+		**Ưu điểm của code:**
+		- ✅ Có chụp màn hình để debug
+		- ✅ Xử lý exception tốt
+		- ✅ Test cases đa dạng
+		- ✅ Sử dụng WebDriverWait
+		
+		**Có thể cải thiện:**
+		- 📈 Sử dụng Page Object Model
+		- 📈 Tách config ra file riêng
+		- 📈 Thêm parallel execution
+		- 📈 Sử dụng TestNG thay JUnit
+		
+		Hy vọng tài liệu này giúp bạn hiểu rõ hơn về Selenium testing! 🚀
